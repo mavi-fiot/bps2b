@@ -1,3 +1,5 @@
+# kzp/secure_vote_api.py
+
 #kzp/secure_vote_api.py
 
 from fastapi import APIRouter, HTTPException
@@ -8,7 +10,11 @@ from kzp.crypto_logic import (
 from crypto.hash_util import hash_ballot
 from crypto.signature import sign_hash, verify_signature
 from crypto.encryption import elgamal_encrypt, elgamal_decrypt
-from models.crypto_schemas import VoteIn, SignDemoResponse, PointData
+from models.crypto_schemas import (
+    VoteIn, SignDemoResponse, PointData,
+    EncryptVoteResponse, SubmitSignatureRequest, SubmitSignatureResponse,
+    KeysResponse
+)
 from services.vote_storage import store_encrypted_vote, load_vote_data
 from models.vote_record import VoteRecord
 import time
@@ -19,7 +25,16 @@ router = APIRouter()
 
 curve, G, q = get_curve_params()
 
-@router.post("/encrypt_vote")
+@router.get("/keys", response_model=KeysResponse)
+def get_keys():
+    _, server_pub = get_server_keys()
+    _, sec_pub = get_secretary_keys()
+    return KeysResponse(
+        server_public_key=PointData(x=server_pub.x, y=server_pub.y),
+        secretary_public_key=PointData(x=sec_pub.x, y=sec_pub.y)
+    )
+
+@router.post("/encrypt_vote", response_model=EncryptVoteResponse)
 def encrypt_vote(vote: VoteIn):
     start = time.perf_counter()
 
@@ -47,13 +62,17 @@ def encrypt_vote(vote: VoteIn):
     elapsed = time.perf_counter() - start
     print(f"[encrypt_vote] Час обробки: {elapsed * 1000:.2f} ms")
 
-    return {"status": "Голос зашифровано", "voter_id": vote.voter_id}
+    return EncryptVoteResponse(
+        status="✅ Голос зашифровано",
+        voter_id=vote.voter_id,
+        choice=vote.choice
+    )
 
-@router.post("/submit_signature")
-def submit_signature(voter: dict):
+@router.post("/submit_signature", response_model=SubmitSignatureResponse)
+def submit_signature(voter: SubmitSignatureRequest):
     start = time.perf_counter()
 
-    voter_id = voter.get("voter_id")
+    voter_id = voter.voter_id
     record: VoteRecord = load_vote_data(voter_id)
     if not record:
         raise HTTPException(404, detail="Запис не знайдено")
@@ -62,34 +81,34 @@ def submit_signature(voter: dict):
     personalized = ballot_text + record.voter_id
     expected_hash = hash_ballot(personalized)
 
-    point_sig = Point(record.sig_x, record.sig_y, curve)
-    pub_point = Point(record.pub_x, record.pub_y, curve)
+    point_sig = Point(record.sig_x, record.sig_y)
+    pub_point = Point(record.pub_x, record.pub_y)
 
     if not verify_signature(expected_hash, point_sig, pub_point):
-        return {"valid": False, "error": "Недійсний підпис"}
+        return SubmitSignatureResponse(valid=False, error="Недійсний підпис")
 
     srv_priv, _ = get_server_keys()
     sec_priv, _ = get_secretary_keys()
 
-    C1_srv = Point(record.C1_srv_x, record.C1_srv_y, curve)
-    C2_srv = Point(record.C2_srv_x, record.C2_srv_y, curve)
-    C1_sec = Point(record.C1_sec_x, record.C1_sec_y, curve)
-    C2_sec = Point(record.C2_sec_x, record.C2_sec_y, curve)
+    C1_srv = Point(record.C1_srv_x, record.C1_srv_y)
+    C2_srv = Point(record.C2_srv_x, record.C2_srv_y)
+    C1_sec = Point(record.C1_sec_x, record.C1_sec_y)
+    C2_sec = Point(record.C2_sec_x, record.C2_sec_y)
 
     point_srv = elgamal_decrypt(C1_srv, C2_srv, srv_priv)
     point_sec = elgamal_decrypt(C1_sec, C2_sec, sec_priv)
 
     if point_srv != point_sec:
-        return {"valid": False, "error": "Розшифровані точки не збігаються"}
+        return SubmitSignatureResponse(valid=False, error="Розшифровані точки не збігаються")
 
     expected_point = expected_hash * G
     if point_srv != expected_point:
-        return {"valid": False, "error": "Точка не відповідає гешу"}
+        return SubmitSignatureResponse(valid=False, error="Точка не відповідає гешу")
 
     elapsed = time.perf_counter() - start
     print(f"[submit_signature] Час перевірки: {elapsed * 1000:.2f} ms")
 
-    return {"valid": True, "message": "Голос підтверджено"}
+    return SubmitSignatureResponse(valid=True, message="Голос підтверджено")
 
 # Допоміжні функції
 
