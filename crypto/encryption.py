@@ -34,3 +34,6 @@ def verify_decrypted_point(M_decrypted: Point, hash_scalar: int) -> bool:
     """
     M_expected = hash_scalar * G
     return M_decrypted == M_expected
+
+elgamal_encrypt = encrypt_hash
+elgamal_decrypt = decrypt_ciphertext
