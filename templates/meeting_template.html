@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Електронне засідання</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Вітаємо в системі ІСЕГ</h1>
+        <p><strong>Тема:</strong> {{ meeting.title }}</p>
+        <p><strong>Дата:</strong> {{ meeting.date }}</p>
+        <p><strong>Статус:</strong> {{ meeting.status }}</p>
+        <p><strong>Учасник:</strong> {{ user.full_name }} ({{ user.role }})</p>
+        <hr>
+
+        {% if meeting.status == 'active' %}
+            <h2>Порядок денний</h2>
+            <ol>
+                {% for item in agenda %}
+                    <li>
+                        <p><strong>{{ item.title }}</strong></p>
+                        <p>{{ item.description }}</p>
+
+                        {% if not item.voted %}
+                            <form method="POST" action="/vote/{{ item.id }}">
+                                <button name="choice" value="yes">✅ За</button>
+                                <button name="choice" value="no">❌ Проти</button>
+                                <button name="choice" value="abstain">⚖️ Утримався</button>
+                            </form>
+                        {% else %}
+                            <p><em>Ваш голос прийнято: {{ item.vote }}</em></p>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ol>
+        {% elif meeting.status == 'closed' %}
+            <h2>Підсумки голосування</h2>
+            {% for item in agenda %}
+                <div class="result">
+                    <h3>{{ item.title }}</h3>
+                    <ul>
+                        <li>За: {{ item.results.yes }}</li>
+                        <li>Проти: {{ item.results.no }}</li>
+                        <li>Утримались: {{ item.results.abstain }}</li>
+                    </ul>
+                </div>
+            {% endfor %}
+
+            <h2>Протокол</h2>
+            <pre>{{ meeting.protocol }}</pre>
+        {% else %}
+            <p>Очікується відкриття засідання…</p>
+        {% endif %}
+
+        <footer>
+            <p>© 2025 Система електронного голосування (ІСЕГ)</p>
+        </footer>
+    </div>
+</body>
+</html>
