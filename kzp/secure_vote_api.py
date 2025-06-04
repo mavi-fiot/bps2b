@@ -1,4 +1,5 @@
 #kzp/secure_vote_api.py
+
 from fastapi import APIRouter, HTTPException
 from ecpy.curves import Point
 from kzp.crypto_logic import (
@@ -7,15 +8,12 @@ from kzp.crypto_logic import (
 from crypto.hash_util import hash_ballot
 from crypto.signature import sign_hash, verify_signature
 from crypto.encryption import elgamal_encrypt, elgamal_decrypt
-from models.crypto_schemas import VoteIn, SignDemoResponse, DecryptDemoResponse, PointData
+from models.crypto_schemas import VoteIn, SignDemoResponse, PointData
 from services.vote_storage import store_encrypted_vote, load_vote_data
 from models.vote_record import VoteRecord
-
 import time
 
 router = APIRouter()
-
-record: VoteRecord = load_vote_data(voter_id)
 
 curve, G, q = get_curve_params()
 
@@ -54,7 +52,7 @@ def submit_signature(voter: dict):
     start = time.perf_counter()
 
     voter_id = voter.get("voter_id")
-    record = load_vote_data(voter_id)
+    record: VoteRecord = load_vote_data(voter_id)
     if not record:
         raise HTTPException(404, detail="Запис не знайдено")
 
