@@ -70,45 +70,53 @@ def encrypt_vote(vote: VoteIn):
 
 @router.post("/submit_signature", response_model=SubmitSignatureResponse)
 def submit_signature(voter: SubmitSignatureRequest):
-    start = time.perf_counter()
+    try:
+        start = time.perf_counter()
+        voter_id = voter.voter_id
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"❌ Невірний формат тіла запиту: {str(e)}")
 
-    voter_id = voter.voter_id
-    record: VoteRecord = load_vote_data(voter_id)
-    if not record:
-        raise HTTPException(404, detail="Запис не знайдено")
+    try:
+        record: VoteRecord = load_vote_data(voter_id)
+        if not record:
+            raise HTTPException(404, detail="❌ Запис не знайдено")
 
-    ballot_text = get_ballot_text(record.choice)
-    personalized = ballot_text + record.voter_id
-    expected_hash = hash_ballot(personalized)
+        ballot_text = get_ballot_text(record.choice)
+        personalized = ballot_text + record.voter_id
+        expected_hash = hash_ballot(personalized)
 
-    point_sig = Point(record.sig_x, record.sig_y)
-    pub_point = Point(record.pub_x, record.pub_y)
+        point_sig = Point(record.sig_x, record.sig_y)
+        pub_point = Point(record.pub_x, record.pub_y)
 
-    if not verify_signature(expected_hash, point_sig, pub_point):
-        return SubmitSignatureResponse(valid=False, error="Недійсний підпис")
+        if not verify_signature(expected_hash, point_sig, pub_point):
+            return SubmitSignatureResponse(valid=False, error="Недійсний підпис")
 
-    srv_priv, _ = get_server_keys()
-    sec_priv, _ = get_secretary_keys()
+        srv_priv, _ = get_server_keys()
+        sec_priv, _ = get_secretary_keys()
 
-    C1_srv = Point(record.C1_srv_x, record.C1_srv_y)
-    C2_srv = Point(record.C2_srv_x, record.C2_srv_y)
-    C1_sec = Point(record.C1_sec_x, record.C1_sec_y)
-    C2_sec = Point(record.C2_sec_x, record.C2_sec_y)
+        C1_srv = Point(record.C1_srv_x, record.C1_srv_y)
+        C2_srv = Point(record.C2_srv_x, record.C2_srv_y)
+        C1_sec = Point(record.C1_sec_x, record.C1_sec_y)
+        C2_sec = Point(record.C2_sec_x, record.C2_sec_y)
 
-    point_srv = elgamal_decrypt(C1_srv, C2_srv, srv_priv)
-    point_sec = elgamal_decrypt(C1_sec, C2_sec, sec_priv)
+        point_srv = elgamal_decrypt(C1_srv, C2_srv, srv_priv)
+        point_sec = elgamal_decrypt(C1_sec, C2_sec, sec_priv)
 
-    if point_srv != point_sec:
-        return SubmitSignatureResponse(valid=False, error="Розшифровані точки не збігаються")
+        if point_srv != point_sec:
+            return SubmitSignatureResponse(valid=False, error="Розшифровані точки не збігаються")
 
-    expected_point = expected_hash * G
-    if point_srv != expected_point:
-        return SubmitSignatureResponse(valid=False, error="Точка не відповідає гешу")
+        expected_point = expected_hash * get_curve_params()[1]
+        if point_srv != expected_point:
+            return SubmitSignatureResponse(valid=False, error="Точка не відповідає гешу")
 
-    elapsed = time.perf_counter() - start
-    print(f"[submit_signature] Час перевірки: {elapsed * 1000:.2f} ms")
+        elapsed = time.perf_counter() - start
+        print(f"[submit_signature] Час перевірки: {elapsed * 1000:.2f} ms")
 
-    return SubmitSignatureResponse(valid=True, message="Голос підтверджено")
+        return SubmitSignatureResponse(valid=True, message="Голос підтверджено")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"❌ Помилка сервера: {str(e)}")
+
 
 # Допоміжні функції
 
