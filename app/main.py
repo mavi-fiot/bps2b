@@ -16,6 +16,8 @@ from app.routes.admin_routes import router as admin_router
 load_dotenv()
 IS_PROD = os.getenv("IS_PROD", "False") == "True"
 DOMAIN = os.getenv("DOMAIN", "https://your-domain.com")
+PORT = int(os.getenv("PORT", 8000))
+
 
 # 🛠 Перевірка директорій
 if not os.path.exists("static"):
