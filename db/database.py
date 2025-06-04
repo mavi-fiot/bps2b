@@ -2,7 +2,7 @@
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from tests.vote_record import Base
+from models.vote_record import Base
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./votes.db"
 
