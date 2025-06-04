@@ -1,11 +1,11 @@
 #app/main
 
+
 import os
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from dotenv import load_dotenv
 
 # 🔌 Імпорт роутерів
@@ -18,12 +18,9 @@ IS_PROD = os.getenv("IS_PROD", "False") == "True"
 DOMAIN = os.getenv("DOMAIN", "https://your-domain.com")
 PORT = int(os.getenv("PORT", 8000))
 
-
-# 🛠 Перевірка директорій
+# 🛠 Перевірка директорії статичних файлів
 if not os.path.exists("static"):
     os.makedirs("static")
-if not os.path.exists("templates"):
-    raise RuntimeError("х Шаблони templates/ не знайдено!")
 
 #  Ініціалізація FastAPI
 app = FastAPI(
@@ -41,23 +38,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-#  Статика і шаблони
+# Статичні файли
 app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
 
-# 🗄️ Ініціалізація бази даних
+#  Ініціалізація бази даних
 from db.database import init_db
 init_db()
 
-# 🔌 Підключення роутерів
+#  Роутери
 app.include_router(secure_vote_router, prefix="/secure", tags=["Захист голосу"])
 app.include_router(admin_router, prefix="/admin", tags=["Адмін"])
 
 #  Головна сторінка
 @app.get("/", response_class=HTMLResponse)
-def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "title": "ІСЕГ — Електронне голосування"
-    })
-
+def read_root():
+    return FileResponse("static/index.html")
