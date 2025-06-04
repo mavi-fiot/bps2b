@@ -12,6 +12,8 @@ from models.crypto_schemas import VoteIn, SignDemoResponse, PointData
 from services.vote_storage import store_encrypted_vote, load_vote_data
 from models.vote_record import VoteRecord
 import time
+import hashlib
+import secrets
 
 router = APIRouter()
 
@@ -60,8 +62,8 @@ def submit_signature(voter: dict):
     personalized = ballot_text + record.voter_id
     expected_hash = hash_ballot(personalized)
 
-    point_sig = Point(record.sig_x, record.sig_y)
-    pub_point = Point(record.pub_x, record.pub_y)
+    point_sig = Point(record.sig_x, record.sig_y, curve)
+    pub_point = Point(record.pub_x, record.pub_y, curve)
 
     if not verify_signature(expected_hash, point_sig, pub_point):
         return {"valid": False, "error": "Недійсний підпис"}
@@ -69,10 +71,10 @@ def submit_signature(voter: dict):
     srv_priv, _ = get_server_keys()
     sec_priv, _ = get_secretary_keys()
 
-    C1_srv = Point(record.C1_srv_x, record.C1_srv_y)
-    C2_srv = Point(record.C2_srv_x, record.C2_srv_y)
-    C1_sec = Point(record.C1_sec_x, record.C1_sec_y)
-    C2_sec = Point(record.C2_sec_x, record.C2_sec_y)
+    C1_srv = Point(record.C1_srv_x, record.C1_srv_y, curve)
+    C2_srv = Point(record.C2_srv_x, record.C2_srv_y, curve)
+    C1_sec = Point(record.C1_sec_x, record.C1_sec_y, curve)
+    C2_sec = Point(record.C2_sec_x, record.C2_sec_y, curve)
 
     point_srv = elgamal_decrypt(C1_srv, C2_srv, srv_priv)
     point_sec = elgamal_decrypt(C1_sec, C2_sec, sec_priv)
@@ -96,7 +98,6 @@ def get_ballot_text(choice: str) -> str:
     return base if choice in ["За", "Проти", "Утримався"] else ""
 
 def vote_signature_key(voter_id: str) -> int:
-    import hashlib
     digest = hashlib.sha256(voter_id.encode()).hexdigest()
     return int(digest, 16) % q
 
@@ -107,7 +108,6 @@ def sign_demo():
     personalized = decision_text + voter_id
     hash_scalar = hash_ballot(personalized)
 
-    import secrets
     priv = secrets.randbelow(q)
     pub = priv * G
     signature = sign_hash(hash_scalar, priv)
@@ -118,6 +118,5 @@ def sign_demo():
         public_key=PointData(x=pub.x, y=pub.y),
         signature=PointData(x=signature.x, y=signature.y)
     )
-
 
 
