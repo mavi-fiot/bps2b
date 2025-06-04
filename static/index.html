@@ -1,25 +1,24 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="UTF-8" />
-  <title>ІСЕГ — Голосування</title>
-  <script src="https://cdn.jsdelivr.net/npm/js-sha3@0.8.0/src/sha3.min.js"></script>
+  <meta charset="UTF-8">
+  <title>ІСЕГ — Електронне голосування</title>
   <style>
-    body { font-family: sans-serif; max-width: 700px; margin: auto; padding: 2rem; }
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 2rem; }
     .card { border: 1px solid #ccc; border-radius: 6px; padding: 1rem; margin-bottom: 2rem; background: #f9f9f9; }
     label, input, select, button { display: block; width: 100%; margin-top: 10px; font-size: 1rem; }
     button { background: #2d6cdf; color: white; border: none; padding: 10px; cursor: pointer; }
-    button:hover { background: #1b4fbf; }
-    pre { background: #eee; padding: 1rem; white-space: pre-wrap; word-break: break-word; }
+    button:hover { background: #1a4fbf; }
+    pre { background: #eee; padding: 1rem; white-space: pre-wrap; }
   </style>
 </head>
 <body>
 
-<h1>ІСЕГ — Захищене голосування</h1>
+<h1>ІСЕГ — Система електронного голосування</h1>
 
 <div class="card">
-  <h2>Блок 1: Голосування</h2>
-  <label>Ваш ідентифікатор:</label>
+  <h2>Голосування</h2>
+  <label>Ваш ID:</label>
   <input id="voterId" placeholder="user-001">
 
   <label>Ваш вибір:</label>
@@ -29,100 +28,42 @@
     <option value="Утримався">Утримався</option>
   </select>
 
-  <button onclick="sendVote()">Надіслати голос</button>
+  <button onclick="submitVote()">Надіслати голос</button>
 </div>
 
 <div class="card">
-  <h2>Блок 2: Завершення голосування</h2>
-  <label>Текст бюлетеня (має відповідати вибору):</label>
-  <textarea id="ballotText" rows="3">За першим питанням порядку денного за проектом рішення: Затвердити звіт керівництва Товариства за 2024 рік</textarea>
-
-  <button onclick="generateKeys()">Згенерувати ключі та підпис</button>
-
-  <label>Публічний ключ X:</label>
-  <input id="pubX" readonly>
-  <label>Публічний ключ Y:</label>
-  <input id="pubY" readonly>
-
-  <label>Підпис X:</label>
-  <input id="sigX" readonly>
-  <label>Підпис Y:</label>
-  <input id="sigY" readonly>
-
-  <button onclick="sendSignature()">Надіслати підписаний бюлетень</button>
+  <h2>Завершити голосування</h2>
+  <button onclick="finalizeVote()">Надіслати підпис на підтвердження</button>
 </div>
 
-<pre id="result">Очікування дій...</pre>
+<pre id="result">Очікування...</pre>
 
 <script>
-  let privKey = null;
-
-  function sha3ToInt(msg) {
-    const hashHex = sha3_256(msg);
-    return BigInt('0x' + hashHex);
-  }
-
-  function sendVote() {
+  async function submitVote() {
     const voterId = document.getElementById("voterId").value.trim();
     const choice = document.getElementById("choice").value;
-    fetch("/secure/encrypt_vote", {
+
+    const response = await fetch("/secure/encrypt_vote", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ voter_id: voterId, choice: choice })
-    })
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("result").textContent = "✅ Голос зашифровано та надіслано:\n" + JSON.stringify(data, null, 2);
+      body: JSON.stringify({ voter_id: voterId, choice })
     });
+
+    const data = await response.json();
+    document.getElementById("result").textContent = JSON.stringify(data, null, 2);
   }
 
-  function generateKeys() {
+  async function finalizeVote() {
     const voterId = document.getElementById("voterId").value.trim();
-    const text = document.getElementById("ballotText").value.trim();
-    const hashInput = text + voterId;
-    const hashInt = sha3ToInt(hashInput);
 
-    privKey = BigInt("0x" + crypto.getRandomValues(new Uint8Array(32)).reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), ""));
-
-    const Gx = 15112221349535400772501151409588531511454012693041857206046113283949847762202n;
-    const Gy = 46316835694926478169428394003475163141307993866256225615783033603165251855960n;
-
-    const pubX = (privKey * Gx) % (2n ** 255n);
-    const pubY = (privKey * Gy) % (2n ** 255n);
-    const sigX = (hashInt * pubX) % (2n ** 255n);
-    const sigY = (hashInt * pubY) % (2n ** 255n);
-
-    document.getElementById("pubX").value = pubX.toString();
-    document.getElementById("pubY").value = pubY.toString();
-    document.getElementById("sigX").value = sigX.toString();
-    document.getElementById("sigY").value = sigY.toString();
-  }
-
-  function sendSignature() {
-    const voterId = document.getElementById("voterId").value.trim();
-    const ballotText = document.getElementById("ballotText").value.trim();
-    const payload = {
-      voter_id: voterId,
-      ballot_text: ballotText,
-      signature: {
-        x: document.getElementById("sigX").value,
-        y: document.getElementById("sigY").value
-      },
-      public_key: {
-        x: document.getElementById("pubX").value,
-        y: document.getElementById("pubY").value
-      }
-    };
-
-    fetch("/secure/verify_vote", {
+    const response = await fetch("/secure/submit_signature", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    })
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("result").textContent = "✅ Відправлено підписаний бюлетень:\n" + JSON.stringify(data, null, 2);
+      body: JSON.stringify({ voter_id: voterId })
     });
+
+    const data = await response.json();
+    document.getElementById("result").textContent = JSON.stringify(data, null, 2);
   }
 </script>
 
