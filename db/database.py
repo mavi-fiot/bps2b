@@ -8,18 +8,24 @@ from models.vote_record import Base
 IS_PROD = os.getenv("IS_PROD", "False") == "True"
 print(f"[init_db] IS_PROD = {IS_PROD}")
 
-DATABASE_URL = "sqlite:///iseg.db"
+DATABASE_URL = "sqlite:///db/iseg.db"
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def init_db():
-    if not IS_PROD:
-        print("[init_db] Режим розробки: перевизначення таблиці vote_records")
+    from models.vote_record import Base
+    from sqlalchemy import inspect
+
+    inspector = inspect(engine)
+    if 'vote_records' in inspector.get_table_names():
+        print("[init_db] Таблиця vote_records існує — очищення")
         Base.metadata.drop_all(bind=engine)
     else:
-        print("[init_db] Продакшн режим: існуюча база не змінюється")
+        print("[init_db] Таблиця vote_records ще не створена")
+
     Base.metadata.create_all(bind=engine)
-    print("[init_db] ✅ Таблиця vote_records ініціалізована")
+    print("[init_db] Таблиця vote_records ініціалізована")
+
 
 

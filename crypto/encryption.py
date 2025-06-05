@@ -1,5 +1,5 @@
 # crypto/encryption.py
-# Реалізація шифрування та розшифрування хешу бюлетеня на кривій Едвардса (Ed25519)
+# Реалізація шифрування та розшифрування точки (Point) на кривій Едвардса (Ed25519)
 
 from ecpy.curves import Curve, Point
 import secrets
@@ -9,12 +9,13 @@ curve = Curve.get_curve('Ed25519')
 G = curve.generator
 q = curve.order
 
-def encrypt_hash(hash_scalar: int, pub_key: Point) -> tuple[Point, Point]:
+def elgamal_encrypt_point(M: Point, pub_key: Point) -> tuple[Point, Point]:
     """
-    ElGamal-шифрування хешу: M = hash_scalar * G
-    Повертає пару (C1, C2)
+    ElGamal-шифрування точки M
+    Повертає пару (C1, C2), де:
+    - C1 = r * G
+    - C2 = M + r * pub_key
     """
-    M = hash_scalar * G
     r = secrets.randbelow(q)
     C1 = r * G
     C2 = M + r * pub_key
@@ -23,17 +24,14 @@ def encrypt_hash(hash_scalar: int, pub_key: Point) -> tuple[Point, Point]:
 def decrypt_ciphertext(C1: Point, C2: Point, priv_key: int) -> Point:
     """
     Розшифровує зашифровану точку ElGamal
+    M = C2 - priv * C1
     """
     S = priv_key * C1
     M_decrypted = C2 - S
     return M_decrypted
 
-def verify_decrypted_point(M_decrypted: Point, hash_scalar: int) -> bool:
+def verify_decrypted_point(M_decrypted: Point, original_point: Point) -> bool:
     """
-    Порівнює розшифровану точку з очікуваним результатом
+    Порівнює розшифровану точку з очікуваною (оригінальною)
     """
-    M_expected = hash_scalar * G
-    return M_decrypted == M_expected
-
-elgamal_encrypt = encrypt_hash
-elgamal_decrypt = decrypt_ciphertext
+    return M_decrypted == original_point

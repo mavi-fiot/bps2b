@@ -16,12 +16,12 @@ def store_encrypted_vote(voter_id: str, choice: str, hash_scalar: int,
         hash_encrypted="",  # для сумісності
         question_number=1,
         decision_text="Затвердити звіт керівництва Товариства за 2024 рік",
-        C1_srv_x=C1_srv.x, C1_srv_y=C1_srv.y,
-        C2_srv_x=C2_srv.x, C2_srv_y=C2_srv.y,
-        C1_sec_x=C1_sec.x, C1_sec_y=C1_sec.y,
-        C2_sec_x=C2_sec.x, C2_sec_y=C2_sec.y,
-        sig_x=signature.x, sig_y=signature.y,
-        pub_x=pub_key.x, pub_y=pub_key.y
+        C1_srv_x=str(C1_srv.x), C1_srv_y=str(C1_srv.y),
+        C2_srv_x=str(C2_srv.x), C2_srv_y=str(C2_srv.y),
+        C1_sec_x=str(C1_sec.x), C1_sec_y=str(C1_sec.y),
+        C2_sec_x=str(C2_sec.x), C2_sec_y=str(C2_sec.y),
+        sig_x=str(signature.x), sig_y=str(signature.y),
+        pub_x=str(pub_key.x), pub_y=str(pub_key.y)
     )
     db.add(vote)
     db.commit()

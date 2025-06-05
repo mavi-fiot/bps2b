@@ -56,6 +56,12 @@ def hash_ballot(ballot_text: str) -> int:
     h = hashlib.sha512(ballot_text.encode()).digest()
     return int.from_bytes(h, 'big') % q
 
+# Перетворення повідомлення у точку кривої через хеш
+def hash_to_point(message: str) -> Point:
+    hash_scalar = int.from_bytes(hashlib.sha512(message.encode()).digest(), 'big') % q
+    return hash_scalar * G
+
+
 # === crypto/signature.py ===
 # Підпис бюлетеня сервером або секретарем
 

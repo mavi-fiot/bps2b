@@ -1,13 +1,17 @@
 #models/crypto_schemas.py
 
-#models/crypto_schemas.py
-
 from pydantic import BaseModel
 
 # Точка на кривій
 class PointData(BaseModel):
-    x: int
-    y: int
+    x: str
+    y: str
+
+class PrivateKeysResponse(BaseModel):
+    server_public_key: PointData
+    secretary_public_key: PointData
+    server_private_key: str
+    secretary_private_key: str
 
 # Вхідне повідомлення для підпису і шифрування голосу
 class VoteIn(BaseModel):
@@ -46,9 +50,10 @@ class DecryptDemoResponse(BaseModel):
 # Демонстрація підпису
 class SignDemoResponse(BaseModel):
     message: str
-    hash_scalar: int
+    hash_scalar: str
     public_key: PointData
     signature: PointData
+    private_key: str
 
 # Відповідь після шифрування голосу
 class EncryptVoteResponse(BaseModel):
@@ -59,6 +64,8 @@ class EncryptVoteResponse(BaseModel):
 # Запит на підтвердження підпису
 class SubmitSignatureRequest(BaseModel):
     voter_id: str
+    signature: PointData
+    public_key: PointData
 
 # Відповідь на підтвердження підпису
 class SubmitSignatureResponse(BaseModel):
