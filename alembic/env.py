@@ -5,7 +5,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from models.vote_record import Base  # Імпорт нашої бази моделей
+from models.vote_record import Base  
 target_metadata = Base.metadata
 
 # this is the Alembic Config object, which provides

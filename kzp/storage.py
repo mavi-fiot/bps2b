@@ -4,7 +4,7 @@ from typing import Dict, Any
 
 class SecureBallotStorage:
     def __init__(self):
-        # Словник у форматі: voter_id → дані голосу
+        # Словник у форматі: voter_id -> дані голосу
         self._votes: Dict[str, Dict[str, Any]] = {}
 
     def store_vote(self, voter_id: str, vote_data: Dict[str, Any]):

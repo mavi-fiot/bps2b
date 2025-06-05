@@ -19,7 +19,7 @@ def generate_voter_keypair():
     pub = priv * G
     return priv, pub
 
-# Хешування бюлетеня + ID
+# Хешування бюлетеня з голосом + ID голосуючого
 def hash_personalized(text: str, voter_id: str) -> int:
     digest = sha3_256((text + voter_id).encode("utf-8")).digest()
     return int.from_bytes(digest, byteorder="big") % q

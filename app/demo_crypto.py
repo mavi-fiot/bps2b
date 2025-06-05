@@ -92,7 +92,7 @@ def encrypt_step_alt(data: EncryptStepRequest):
     message = f"{data.decision_text} - голосую {data.choice} (ID: {data.voter_id})"
     point_M = hash_to_point(message)
 
-    # Кожна сторона незалежно шифрує точку M
+    # Відкритими ключами серверу та секретаря незалежно шифрується точка M
     C1_srv, C2_srv = elgamal_encrypt_point(point_M, server_pub)
     C1_sec, C2_sec = elgamal_encrypt_point(point_M, secretary_pub)
 

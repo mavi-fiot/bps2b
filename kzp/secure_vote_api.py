@@ -93,7 +93,7 @@ def encrypt_vote(vote: VoteIn):
         choice=vote.choice
     )
 
-# 🔹 Безпечне створення точки
+# Безпечне створення точки
 
 def safe_point(x_str, y_str, label="точка"):
     try:
@@ -125,7 +125,7 @@ def submit_signature(voter: SubmitSignatureRequest):
 
         curve = Curve.get_curve('Ed25519')
 
-        # ✔️ Безпечне створення точок
+        # Безпечне створення точок
         point_sig = safe_point(voter.signature.x, voter.signature.y, label="підпис")
         pub_point = safe_point(voter.public_key.x, voter.public_key.y, label="публічний ключ")
 
@@ -137,7 +137,7 @@ def submit_signature(voter: SubmitSignatureRequest):
         if not verify_signature(expected_hash, point_sig, pub_point):
             return SubmitSignatureResponse(valid=False, error="Недійсний підпис")
 
-        # ✔️ Розшифрування
+        # Розшифрування
         server_priv, _ = get_server_keys()
         secretary_priv, _ = get_secretary_keys()
 

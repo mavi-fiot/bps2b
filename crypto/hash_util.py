@@ -23,7 +23,7 @@ print(f"Публічний ключ: ({pub_key.x}, {pub_key.y})")
 message = 'З питання першого порядку денного за проектом рішення: Затвердити річний звіт Товариства за 2024 рік - голосую За'
 print(f"\n Повідомлення: {message}")
 
-# Хеш повідомлення → скаляр → точка
+# Хеш повідомлення -> скаляр -> точка
 hash_scalar = int.from_bytes(hashlib.sha512(message.encode()).digest(), 'big') % q
 M = hash_scalar * G
 print(f"Хеш як скаляр: {hash_scalar}")
@@ -49,8 +49,7 @@ M_check = hash_scalar * G
 is_valid = M_check == M_decrypted
 print(f"\n Перевірка відповідності: {'успішна' if is_valid else '❌ неуспішна'}")
 
-# === crypto/hash_util.py ===
-# Файл для обчислення хешу бюлетеня
+# обчислення хешу бюлетеня
 
 def hash_ballot(ballot_text: str) -> int:
     h = hashlib.sha512(ballot_text.encode()).digest()
@@ -63,7 +62,7 @@ def hash_to_point(message: str) -> Point:
 
 
 # === crypto/signature.py ===
-# Підпис бюлетеня сервером або секретарем
+# Підпис бюлетеня сервером, секретарем
 
 def sign_hash(hash_scalar: int, private_key: int) -> Point:
     return private_key * G

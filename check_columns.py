@@ -1,6 +1,6 @@
 import sqlite3
 
-conn = sqlite3.connect("votes.db")
+conn = sqlite3.connect("db/iseg.db")
 cursor = conn.cursor()
 
 cursor.execute("PRAGMA table_info(vote_records);")
