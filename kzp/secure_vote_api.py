@@ -112,12 +112,12 @@ def submit_signature(voter: SubmitSignatureRequest):
         start = time.perf_counter()
         voter_id = voter.voter_id
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"❌ Невірний формат тіла запиту: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"ххх Невірний формат тіла запиту: {str(e)}")
 
     try:
         record: VoteRecord = load_vote_data(voter_id)
         if not record:
-            raise HTTPException(404, detail="❌ Запис не знайдено")
+            raise HTTPException(404, detail="ххх Запис не знайдено")
 
         ballot_text = get_ballot_text(record.choice)
         personalized = ballot_text + record.voter_id
@@ -164,7 +164,7 @@ def submit_signature(voter: SubmitSignatureRequest):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"❌ Помилка сервера: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"ххх Помилка сервера: {str(e)}")
 
 
 
