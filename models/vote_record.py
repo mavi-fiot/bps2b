@@ -1,6 +1,6 @@
 #models/vote_record.py
 
-from sqlalchemy import Column, String, Integer, DateTime, Float
+from sqlalchemy import Column, String, Integer
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 from pydantic import BaseModel
@@ -13,29 +13,25 @@ class VoteRecord(Base):
     id = Column(Integer, primary_key=True, index=True)
     voter_id = Column(String, nullable=False)
     choice = Column(String, nullable=False)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(String)
     hash_plain = Column(String, nullable=False)
     hash_encrypted = Column(String, nullable=True)
     question_number = Column(Integer, nullable=False)
     decision_text = Column(String, nullable=False)
 
-    # Координати шифрованих точок (ElGamal server)
-    C1_srv_x = Column(Float, nullable=True)
-    C1_srv_y = Column(Float, nullable=True)
-    C2_srv_x = Column(Float, nullable=True)
-    C2_srv_y = Column(Float, nullable=True)
-
-    # Координати шифрованих точок (ElGamal secretary)
-    C1_sec_x = Column(Float, nullable=True)
-    C1_sec_y = Column(Float, nullable=True)
-    C2_sec_x = Column(Float, nullable=True)
-    C2_sec_y = Column(Float, nullable=True)
-
-    # Підпис та публічний ключ
-    sig_x = Column(Float, nullable=True)
-    sig_y = Column(Float, nullable=True)
-    pub_x = Column(Float, nullable=True)
-    pub_y = Column(Float, nullable=True)
+    # Точки (ElGamal та підпис/ключ) як текст:
+    C1_srv_x = Column(String)
+    C1_srv_y = Column(String)
+    C2_srv_x = Column(String)
+    C2_srv_y = Column(String)
+    C1_sec_x = Column(String)
+    C1_sec_y = Column(String)
+    C2_sec_x = Column(String)
+    C2_sec_y = Column(String)
+    sig_x = Column(String)
+    sig_y = Column(String)
+    pub_x = Column(String)
+    pub_y = Column(String)
 
 class VoteRecordOut(BaseModel):
     voter_id: str
@@ -48,5 +44,4 @@ class VoteRecordOut(BaseModel):
 
     class Config:
         orm_mode = True
-
 

@@ -88,7 +88,7 @@ def encrypt_vote(vote: VoteIn):
     print(f"[encrypt_vote] Час обробки: {elapsed * 1000:.2f} ms")
 
     return EncryptVoteResponse(
-        status="✅ Голос зашифровано",
+        status="Голос зашифровано",
         voter_id=vote.voter_id,
         choice=vote.choice
     )
@@ -112,12 +112,12 @@ def submit_signature(voter: SubmitSignatureRequest):
         start = time.perf_counter()
         voter_id = voter.voter_id
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f" Невірний формат тіла запиту: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"❌ Невірний формат тіла запиту: {str(e)}")
 
     try:
         record: VoteRecord = load_vote_data(voter_id)
         if not record:
-            raise HTTPException(404, detail=" Запис не знайдено")
+            raise HTTPException(404, detail="❌ Запис не знайдено")
 
         ballot_text = get_ballot_text(record.choice)
         personalized = ballot_text + record.voter_id
@@ -125,12 +125,19 @@ def submit_signature(voter: SubmitSignatureRequest):
 
         curve = Curve.get_curve('Ed25519')
 
+        # ✔️ Безпечне створення точок
         point_sig = safe_point(voter.signature.x, voter.signature.y, label="підпис")
         pub_point = safe_point(voter.public_key.x, voter.public_key.y, label="публічний ключ")
+
+        print(f"\n _________Контроль на сервері:")
+        print(f"  Публічний ключ: ({pub_point.x}, {pub_point.y})")
+        print(f"  Хеш: {expected_hash}")
+        print(f"  Очікувана точка: ({point_sig.x}, {point_sig.y})")
 
         if not verify_signature(expected_hash, point_sig, pub_point):
             return SubmitSignatureResponse(valid=False, error="Недійсний підпис")
 
+        # ✔️ Розшифрування
         server_priv, _ = get_server_keys()
         secretary_priv, _ = get_secretary_keys()
 
@@ -154,8 +161,11 @@ def submit_signature(voter: SubmitSignatureRequest):
 
         return SubmitSignatureResponse(valid=True, message="Голос підтверджено")
 
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f" Помилка сервера: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"❌ Помилка сервера: {str(e)}")
+
 
 
 # Допоміжні функції
@@ -168,6 +178,13 @@ def vote_signature_key(voter_id: str) -> int:
     digest = hashlib.sha256(voter_id.encode()).hexdigest()
     return int(digest, 16) % q
 
+# Безпечне створення точки з координат
+def safe_point(x: str, y: str, label: str = "") -> Point:
+    curve = Curve.get_curve('Ed25519')
+    try:
+        return Point(int(x), int(y), curve)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"ХХХ Помилка сервера: 500: === Некоректна {label}: {x}, {y} → '{str(e)}'")
 
 
 
