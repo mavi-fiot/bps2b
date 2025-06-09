@@ -18,8 +18,8 @@ class VoteIn(BaseModel):
     voter_id: str
     ballot_id: str
     choice: str
-    signature: PointData
-    public_key: PointData
+    # signature: PointData
+    # public_key: PointData
 
 # Структура для збереження результатів подвійного шифрування
 class EncryptedData(BaseModel):
@@ -78,3 +78,7 @@ class KeysResponse(BaseModel):
     server_public_key: PointData
     secretary_public_key: PointData
 
+class PrivateKeysResponseVoter(BaseModel):
+    voter_id: str
+    priv: str
+    pub: PointData

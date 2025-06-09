@@ -21,8 +21,8 @@ class DemoEncryptRequest(BaseModel):
     choice: str = "За"
     decision_text: str = "Затвердити річний звіт Товариства за 2024 рік"
 
-# Класичне послідовне шифрування точки (сервер → секретар)
-@router.post("/encrypt_step", summary="Хеш → Точка → Подвійне ElGamal")
+# Класичне послідовне шифрування точки (сервер =>> секретар)
+@router.post("/encrypt_step", summary="Хеш =>> Точка =>> Подвійне ElGamal")
 def encrypt_step(data: DemoEncryptRequest):
     server_priv, server_pub = get_server_keys()
     secretary_priv, secretary_pub = get_secretary_keys()

@@ -18,7 +18,7 @@ def sign_hash(hash_scalar: int, private_key: int) -> Point:
         _ = Point(signed_point.x, signed_point.y, curve)
         print("+ Підпис — точка на кривій")
     except Exception:
-        print("х Підпис — не точка на кривій!")
+        print("х Підпис — точка НЕ на кривій!")
 
     return signed_point
 
@@ -43,8 +43,8 @@ if __name__ == "__main__":
     personalized = ballot_text + voter_id
 
     def hash_ballot(text: str) -> int:
-        from hashlib import sha3_256
-        digest = sha3_256(text.encode("utf-8")).digest()
+        from hashlib import sha3_512
+        digest = sha3_512(text.encode("utf-8")).digest()
         return int.from_bytes(digest, byteorder="big") % q
 
     priv = secrets.randbelow(q)

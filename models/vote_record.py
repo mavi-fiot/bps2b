@@ -1,6 +1,6 @@
 #models/vote_record.py
 
-from sqlalchemy import Column, String, Integer
+from sqlalchemy import Column, String, Integer, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 from pydantic import BaseModel
@@ -33,6 +33,8 @@ class VoteRecord(Base):
     pub_x = Column(String)
     pub_y = Column(String)
 
+    is_verified = Column(Boolean, default=False)
+
 class VoteRecordOut(BaseModel):
     voter_id: str
     choice: str
@@ -41,7 +43,10 @@ class VoteRecordOut(BaseModel):
     hash_encrypted: str | None
     question_number: int
     decision_text: str
+    is_verified: bool
 
     class Config:
         orm_mode = True
+
+
 

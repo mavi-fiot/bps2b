@@ -1,7 +1,7 @@
 # crypto/signature_phase.py
 
 from ecpy.curves import Curve, Point
-from hashlib import sha3_256
+from hashlib import sha3_512
 import secrets
 import json
 
@@ -21,7 +21,7 @@ def generate_voter_keypair():
 
 # Хешування бюлетеня з голосом + ID голосуючого
 def hash_personalized(text: str, voter_id: str) -> int:
-    digest = sha3_256((text + voter_id).encode("utf-8")).digest()
+    digest = sha3_512((text + voter_id).encode("utf-8")).digest()
     return int.from_bytes(digest, byteorder="big") % q
 
 # Підпис: h * (priv * G)

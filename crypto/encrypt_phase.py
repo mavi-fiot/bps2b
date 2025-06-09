@@ -1,7 +1,7 @@
 # crypto/encrypt_phase.py
 
 from ecpy.curves import Curve, Point
-from hashlib import sha3_256
+from hashlib import sha3_512
 import secrets
 import json
 
@@ -25,7 +25,7 @@ secretary_priv, secretary_pub = generate_keypair()
 # Хешування персоналізованого повідомлення
 def hash_personalized(ballot_text: str, voter_id: str) -> int:
     msg = ballot_text + voter_id
-    digest = sha3_256(msg.encode("utf-8")).digest()
+    digest = sha3_512(msg.encode("utf-8")).digest()
     return int.from_bytes(digest, byteorder="big") % q
 
 # ElGamal шифрування для точки M = h * G
@@ -63,5 +63,17 @@ def demo_encrypt(voter_id: str):
 
 # Якщо виконується напряму
 if __name__ == "__main__":
+    import time
+
+    #  Вимірювання часу генерації ключів
+    t0 = time.time()
+    server_priv, server_pub = generate_keypair()
+    secretary_priv, secretary_pub = generate_keypair()
+    t1 = time.time()
+
+    keygen_time_ms = (t1 - t0) * 1000
+    print(f"time Час генерації ключів (ElGamal, Ed25519): {keygen_time_ms:.2f} ms")
+
+    # Демонстрація шифрування
     result = demo_encrypt("demo-voter")
     print(json.dumps(result, indent=2))

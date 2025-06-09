@@ -1,10 +1,9 @@
-#crypto/hash_util.py
+# crypto/hash_util.py
 
 from ecpy.curves import Curve, Point
 import secrets
 import hashlib
 
-# Вибір кривої (найближча до специфікацій ДСТУ 9041:2020 — Ed25519)
 curve = Curve.get_curve('Ed25519')
 G = curve.generator
 q = curve.order
@@ -12,19 +11,19 @@ q = curve.order
 print(f"_/ Крива: {curve.name}")
 print(f"+ Порядок q = {q}")
 
-# Генерація ключів
+# Генерація ключів для демонстрації
 priv_key = secrets.randbelow(q)
 pub_key = priv_key * G
 
 print(f"Приватний ключ: {priv_key}")
 print(f"Публічний ключ: ({pub_key.x}, {pub_key.y})")
 
-# Повідомлення
-message = 'З питання першого порядку денного за проектом рішення: Затвердити річний звіт Товариства за 2024 рік - голосую За'
+# Повідомлення для демонстрації
+message = 'З питання першого порядку денного за проектом рішення: Затвердити річний звіт Товариства за 2024 рік - голосую За (демонстрація)'
 print(f"\n Повідомлення: {message}")
 
-# Хеш повідомлення -> скаляр -> точка
-hash_scalar = int.from_bytes(hashlib.sha512(message.encode()).digest(), 'big') % q
+# Хешування
+hash_scalar = int.from_bytes(hashlib.sha3_512(message.encode()).digest(), 'big') % q
 M = hash_scalar * G
 print(f"Хеш як скаляр: {hash_scalar}")
 print(f"Повідомлення як точка M: ({M.x}, {M.y})")
@@ -47,28 +46,25 @@ print(f"\nРозшифровано точку M: ({M_decrypted.x}, {M_decrypted.
 # Перевірка відповідності
 M_check = hash_scalar * G
 is_valid = M_check == M_decrypted
-print(f"\n Перевірка відповідності: {'успішна' if is_valid else '❌ неуспішна'}")
+print(f"\n Перевірка відповідності: {'успішна' if is_valid else 'ХХХ неуспішна'}")
 
-# обчислення хешу бюлетеня
+# === Утиліти ===
 
 def hash_ballot(ballot_text: str) -> int:
-    h = hashlib.sha512(ballot_text.encode()).digest()
+    h = hashlib.sha3_512(ballot_text.encode()).digest()
     return int.from_bytes(h, 'big') % q
 
-# Перетворення повідомлення у точку кривої через хеш
 def hash_to_point(message: str) -> Point:
-    hash_scalar = int.from_bytes(hashlib.sha512(message.encode()).digest(), 'big') % q
+    hash_scalar = int.from_bytes(hashlib.sha3_512(message.encode()).digest(), 'big') % q
     return hash_scalar * G
 
-
-# === crypto/signature.py ===
-# Підпис бюлетеня сервером, секретарем
-
-def sign_hash(hash_scalar: int, private_key: int) -> Point:
-    return private_key * G
-
-# Перевірка підпису за публічним ключем
-
-def verify_signature(hash_scalar: int, signature: Point, public_key: Point) -> bool:
-    expected = hash_scalar * G
-    return signature == expected
+def safe_point(x: str | int, y: str | int, label: str = "") -> Point:
+    curve = Curve.get_curve("Ed25519")
+    try:
+        px = int(x)
+        py = int(y)
+        point = Point(px, py, curve)
+        print(f"  {label or 'Точка'}: ({point.x}, {point.y})")
+        return point
+    except Exception as e:
+        raise ValueError(f"Х Помилка при створенні точки {label}: {e}")

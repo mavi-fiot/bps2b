@@ -40,7 +40,7 @@ app.add_middleware(
 
 # Підключення роутерів
 app.include_router(secure_vote_router, prefix="/secure", tags=["Захист голосу"])
-app.include_router(admin_router, prefix="/admin", tags=["Адмін"])
+app.include_router(admin_router, prefix="/admin", tags=["Адмін"])  
 app.include_router(demo_crypto.router)
 
 # Підключення статичних файлів
